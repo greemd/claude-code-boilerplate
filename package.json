@@ -1,0 +1,35 @@
+{
+  "name": "claude-code-boilerplate",
+  "version": "1.0.0",
+  "description": "Universal coding standards and AI agent configurations for Claude Code projects with MCP server management",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "setup:mcp": "node .claude/mcp/setup.js",
+    "mcp:postgres": "node .claude/mcp/postgres.js",
+    "mcp:fetch": "npx @modelcontextprotocol/server-fetch",
+    "mcp:filesystem": "npx @modelcontextprotocol/server-filesystem",
+    "mcp:memory": "npx @modelcontextprotocol/server-memory"
+  },
+  "keywords": [
+    "claude-code",
+    "boilerplate",
+    "coding-standards",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/server-postgres": "^0.6.2",
+    "@modelcontextprotocol/server-fetch": "^0.6.2",
+    "@modelcontextprotocol/server-filesystem": "^0.6.2",
+    "@modelcontextprotocol/server-memory": "^0.6.2"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
