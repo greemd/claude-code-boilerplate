@@ -41,17 +41,11 @@ Universal coding standards and AI agent configurations for Claude Code projects 
 ### Project Customization
 
 1. Edit `CLAUDE.md` and replace `{{PLACEHOLDERS}}` with your project specifics
-2. Update `.env` with your database and API credentials
-3. Modify MCP server list in `Makefile` or `.claude/mcp/setup.js` as needed
+2. Remove unnecessary prompts from CLAUDE.md based on your project (like language specifics)
+3. Update `.env` with your database and API credentials
+4. Modify MCP server list in `Makefile` or `.claude/mcp/setup.js` as needed
 
 ## Features
-
-### Multi-Language Support
-
-- TypeScript/JavaScript (React, Hono, Elysia, Drizzle)
-- Python (FastAPI, SQLAlchemy, pytest)
-- Go (Gin, GORM, go test)
-- Rust (Axum, SeaORM, cargo test)
 
 ### AI Agent Workflow
 
