@@ -29,12 +29,6 @@ if (!existsSync(join(projectRoot, '.env'))) {
 
 const mcpServers = [
   {
-    name: `postgres-${projectName}`,
-    command: `node ${join(projectRoot, '.claude/mcp/postgres.js')}`,
-    condition: !!process.env.DATABASE_URL,
-    warning: 'DATABASE_URL not set, skipping postgres MCP',
-  },
-  {
     name: `fetch-${projectName}`,
     command: 'npx @modelcontextprotocol/server-fetch',
     condition: true,
@@ -53,7 +47,9 @@ const mcpServers = [
     name: `context7-${projectName}`,
     command: 'https://mcp.context7.com/mcp',
     transport: 'http',
-    condition: true,
+    header: process.env.CONTEXT7_API_KEY ? `CONTEXT7_API_KEY: ${process.env.CONTEXT7_API_KEY}` : null,
+    condition: !!process.env.CONTEXT7_API_KEY,
+    warning: 'CONTEXT7_API_KEY not set, skipping context7 MCP',
   },
 ];
 
@@ -73,6 +69,9 @@ for (const server of mcpServers) {
     let command;
     if (server.transport === 'http') {
       command = `claude mcp add --transport http ${server.name} ${server.command}`;
+      if (server.header) {
+        command += ` --header "${server.header}"`;
+      }
     } else {
       command = `claude mcp add ${server.name} -- ${server.command}`;
     }

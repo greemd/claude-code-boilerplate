@@ -27,6 +27,7 @@ Universal coding standards and AI agent configurations for Claude Code projects 
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
+   # Required: CONTEXT7_API_KEY for Context7 MCP
    ```
 
 4. Setup MCP servers:
@@ -42,7 +43,7 @@ Universal coding standards and AI agent configurations for Claude Code projects 
 
 1. Edit `CLAUDE.md` and replace `{{PLACEHOLDERS}}` with your project specifics
 2. Remove unnecessary prompts from CLAUDE.md based on your project (like language specifics)
-3. Update `.env` with your database and API credentials
+3. Update `.env` with your API credentials (especially `CONTEXT7_API_KEY`)
 4. Modify MCP server list in `Makefile` or `.claude/mcp/setup.js` as needed
 
 ## Features
@@ -74,11 +75,10 @@ This boilerplate includes automated setup for common MCP servers:
 
 | Server | Purpose | Configuration |
 |--------|---------|---------------|
-| **postgres** | Database access and queries | Requires `DATABASE_URL` in `.env` |
 | **fetch** | HTTP requests and API calls | No configuration needed |
 | **filesystem** | File system access | Auto-configured to project root |
 | **memory** | Persistent memory across sessions | No configuration needed |
-| **context7** | Enhanced context retrieval | No configuration needed |
+| **context7** | Enhanced context retrieval | Requires `CONTEXT7_API_KEY` in `.env` |
 
 ### MCP Server Management
 
@@ -104,9 +104,9 @@ make unregister-mcp
 ### How It Works
 
 1. **Installation**: MCP server packages are managed as npm dependencies in `package.json`
-2. **Registration**: `make setup-mcp` registers servers with project-specific names (e.g., `postgres-myproject`)
+2. **Registration**: `make setup-mcp` registers servers with project-specific names (e.g., `context7-myproject`)
 3. **Auto-Start**: Claude Code automatically starts/stops MCP servers during sessions
-4. **Environment Loading**: Wrapper scripts (like `.claude/mcp/postgres.js`) load `.env` variables automatically
+4. **Environment Loading**: `.env` variables are loaded automatically for servers that require API keys
 
 ### Adding Custom MCP Servers
 
@@ -130,13 +130,25 @@ make unregister-mcp
 #### For HTTP-based MCP servers:
 
 ```bash
+# Without authentication
 claude mcp add --transport http your-server-name https://your-mcp-server.com/mcp
+
+# With API key authentication (like Context7)
+claude mcp add --transport http context7 https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: your-api-key"
 ```
 
 Or add to `Makefile`:
 ```makefile
 setup-mcp:
+    # Without authentication
     @claude mcp add --transport http your-server-$(PROJECT_NAME) https://your-mcp-server.com/mcp
+
+    # With API key from environment variables
+    @if [ -n "$(YOUR_API_KEY)" ]; then \
+        claude mcp add --transport http your-server-$(PROJECT_NAME) https://your-mcp-server.com/mcp --header "YOUR_API_KEY: $(YOUR_API_KEY)"; \
+    else \
+        echo "⚠️  YOUR_API_KEY not set, skipping server"; \
+    fi
 ```
 
 ## Credits

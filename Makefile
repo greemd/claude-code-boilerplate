@@ -32,13 +32,6 @@ setup-mcp: ## Register MCP servers to Claude Code
 		cp .env.example .env; \
 		echo "📝 Please edit .env with your configuration"; \
 	fi
-	@echo "Registering postgres MCP..."
-	@if [ -n "$(DATABASE_URL)" ]; then \
-		claude mcp add postgres-$(PROJECT_NAME) -- node $(CURDIR)/.claude/mcp/postgres.js; \
-		echo "✅ postgres-$(PROJECT_NAME) registered"; \
-	else \
-		echo "⚠️  DATABASE_URL not set, skipping postgres MCP"; \
-	fi
 	@echo "Registering fetch MCP..."
 	@claude mcp add fetch-$(PROJECT_NAME) -- npx @modelcontextprotocol/server-fetch
 	@echo "✅ fetch-$(PROJECT_NAME) registered"
@@ -49,15 +42,18 @@ setup-mcp: ## Register MCP servers to Claude Code
 	@claude mcp add memory-$(PROJECT_NAME) -- npx @modelcontextprotocol/server-memory
 	@echo "✅ memory-$(PROJECT_NAME) registered"
 	@echo "Registering context7 MCP..."
-	@claude mcp add --transport http context7-$(PROJECT_NAME) https://mcp.context7.com/mcp
-	@echo "✅ context7-$(PROJECT_NAME) registered"
+	@if [ -n "$(CONTEXT7_API_KEY)" ]; then \
+		claude mcp add --transport http context7-$(PROJECT_NAME) https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: $(CONTEXT7_API_KEY)"; \
+		echo "✅ context7-$(PROJECT_NAME) registered"; \
+	else \
+		echo "⚠️  CONTEXT7_API_KEY not set, skipping context7 MCP"; \
+	fi
 	@echo ""
 	@echo "🎉 All MCP servers registered for $(PROJECT_NAME)!"
 	@echo "Run 'claude mcp list' to verify"
 
 unregister-mcp: ## Remove MCP servers from Claude Code
 	@echo "🗑️  Unregistering MCP servers for $(PROJECT_NAME)..."
-	@claude mcp remove postgres-$(PROJECT_NAME) 2>/dev/null || true
 	@claude mcp remove fetch-$(PROJECT_NAME) 2>/dev/null || true
 	@claude mcp remove filesystem-$(PROJECT_NAME) 2>/dev/null || true
 	@claude mcp remove memory-$(PROJECT_NAME) 2>/dev/null || true
