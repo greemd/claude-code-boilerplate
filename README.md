@@ -41,10 +41,21 @@ Universal coding standards and AI agent configurations for Claude Code projects 
 
 ### Project Customization
 
-1. Edit `CLAUDE.md` and replace `{{PLACEHOLDERS}}` with your project specifics
-2. Remove unnecessary prompts from CLAUDE.md based on your project (like language specifics)
-3. Update `.env` with your API credentials (especially `CONTEXT7_API_KEY`)
-4. Modify MCP server list in `Makefile` or `.claude/mcp/setup.js` as needed
+1. **Configure CLAUDE.md for your project:**
+   - Open `CLAUDE.md` and fill in the Project Configuration table:
+     - Set your primary language (TypeScript, Python, Go, Rust, etc.)
+     - Choose package manager (pnpm, npm, yarn, pip, poetry, etc.)
+     - Select backend framework (Hono, FastAPI, Gin, Axum, etc.)
+     - Choose frontend framework (React, Vue, Svelte, or None)
+     - Select ORM/database tool (Drizzle, Prisma, SQLAlchemy, GORM, etc.)
+     - Define testing framework (Vitest, pytest, go test, cargo test, etc.)
+     - Choose linter/formatter (Biome, Ruff, golangci-lint, rustfmt, etc.)
+   - Replace remaining `{{PLACEHOLDERS}}` (PROJECT_NAME, VERSION, DATE, etc.)
+   - The language-specific sections will serve as references - use patterns that match your stack
+
+2. Update `.env` with your API credentials (especially `CONTEXT7_API_KEY`)
+
+3. Modify MCP server list in `Makefile` or `.claude/mcp/setup.js` as needed
 
 ## Features
 
@@ -60,12 +71,7 @@ Universal coding standards and AI agent configurations for Claude Code projects 
 
 | Agent | Purpose |
 |-------|---------|
-| fullstack-developer | Implements features |
-| principal-engineer | Code review and investigation |
-| qa-engineer | Testing and coverage |
-| business-analyst | Requirements analysis |
-| solution-architect | Architecture design |
-| uiux-designer | UI/UX review |
+| code-simplifier | Refactors complex code to improve readability and reduce complexity |
 
 ## MCP (Model Context Protocol) Servers
 

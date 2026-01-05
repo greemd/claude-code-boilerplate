@@ -9,9 +9,10 @@
 ## Quick Start
 
 1. Copy this file to your project root as `CLAUDE.md`
-2. Replace all `{{PLACEHOLDER}}` values with your project specifics
-3. Delete language/framework sections that don't apply to your stack
-4. Add project-specific patterns as needed
+2. Fill in the Project Configuration table below with your project specifics
+3. Replace all remaining `{{PLACEHOLDER}}` values (PROJECT_NAME, VERSION, DATE, ARCHITECTURE_TYPE)
+4. Use the Technology Selection Guidelines and Naming Conventions as references
+5. Add project-specific patterns, coding examples, and best practices for your stack
 
 ---
 
@@ -35,22 +36,18 @@
 
 1. [Technology Selection Guidelines](#1-technology-selection-guidelines)
 2. [Naming Conventions](#2-naming-conventions)
-3. [Language-Specific Standards](#3-language-specific-standards)
-4. [Backend Patterns](#4-backend-patterns)
-5. [Frontend Patterns](#5-frontend-patterns)
-6. [Database Patterns](#6-database-patterns)
-7. [Testing Standards](#7-testing-standards)
-8. [SOLID Principles](#8-solid-principles)
-9. [Security Best Practices](#9-security-best-practices)
-10. [Error Handling](#10-error-handling)
-11. [Performance Guidelines](#11-performance-guidelines)
-12. [Documentation Standards](#12-documentation-standards)
-13. [Git Workflow](#13-git-workflow)
-14. [Issue Hierarchy](#14-issue-hierarchy)
-15. [AI Agent Workflow](#15-ai-agent-workflow)
-    - [15.0 TDD-First Principle (ABSOLUTE REQUIREMENT)](#150-tdd-first-principle-absolute-requirement)
-    - [15.0.1 Zero-Impact Implementation (ABSOLUTE REQUIREMENT)](#1501-zero-impact-implementation-absolute-requirement)
-16. [Claude Code Configuration](#16-claude-code-configuration)
+3. [Testing Standards](#3-testing-standards)
+4. [SOLID Principles](#4-solid-principles)
+5. [Security Best Practices](#5-security-best-practices)
+6. [Error Handling](#6-error-handling)
+7. [Performance Guidelines](#7-performance-guidelines)
+8. [Documentation Standards](#8-documentation-standards)
+9. [Git Workflow](#9-git-workflow)
+10. [Issue Hierarchy](#10-issue-hierarchy)
+11. [AI Agent Workflow](#11-ai-agent-workflow)
+    - [11.0 TDD-First Principle (ABSOLUTE REQUIREMENT)](#110-tdd-first-principle-absolute-requirement)
+    - [11.0.1 Zero-Impact Implementation (ABSOLUTE REQUIREMENT)](#1101-zero-impact-implementation-absolute-requirement)
+12. [Claude Code Configuration](#12-claude-code-configuration)
 
 ---
 
@@ -181,354 +178,9 @@ Before adopting any new technology:
 
 ---
 
-## 3. Language-Specific Standards
+## 3. Testing Standards
 
-### 3.1 TypeScript
-
-```json
-{
-  "compilerOptions": {
-    "strict": true,
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "noEmitOnError": true
-  }
-}
-```
-
-**Rules:**
-- Always use `strict: true`
-- Prefer `type` over `interface` (unless extending)
-- Never use `any` - use `unknown` with type guards
-- Use Zod for runtime validation
-
-### 3.2 Python
-
-```toml
-[tool.ruff]
-target-version = "py311"
-line-length = 88
-
-[tool.mypy]
-strict = true
-python_version = "3.11"
-```
-
-**Rules:**
-- Use type hints everywhere
-- Use Pydantic for data validation
-- Use `async/await` for I/O operations
-
-### 3.3 Go
-
-**Rules:**
-- Use `gofmt` / `goimports` for formatting
-- Export only what's necessary (PascalCase)
-- Handle errors explicitly - never ignore with `_`
-- Use context for cancellation
-
-### 3.4 Rust
-
-**Rules:**
-- Use `clippy` for linting
-- Use `rustfmt` for formatting
-- Prefer `Result<T, E>` over panics
-- Use `?` operator for error propagation
-
----
-
-## 4. Backend Patterns
-
-### 4.1 TypeScript - Hono
-
-```typescript
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
-
-const app = new Hono()
-  .get("/users", async (c) => {
-    const users = await db.select().from(usersTable);
-    return c.json(users);
-  })
-  .post("/users",
-    zValidator("json", z.object({ name: z.string(), email: z.string().email() })),
-    async (c) => {
-      const data = c.req.valid("json");
-      const [user] = await db.insert(usersTable).values(data).returning();
-      return c.json(user, 201);
-    }
-  );
-
-export type AppType = typeof app;
-```
-
-### 4.2 TypeScript - Elysia
-
-```typescript
-import { Elysia, t } from "elysia";
-
-const app = new Elysia()
-  .get("/users", async () => await db.select().from(usersTable))
-  .post("/users", async ({ body }) => {
-    const [user] = await db.insert(usersTable).values(body).returning();
-    return user;
-  }, {
-    body: t.Object({ name: t.String(), email: t.String({ format: "email" }) })
-  });
-
-export type App = typeof app;
-```
-
-### 4.3 Python - FastAPI
-
-```python
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr
-
-app = FastAPI()
-
-class UserCreate(BaseModel):
-    name: str
-    email: EmailStr
-
-@app.get("/users")
-async def get_users():
-    return await db.fetch_all("SELECT * FROM users")
-
-@app.post("/users", status_code=201)
-async def create_user(data: UserCreate):
-    return await db.create_user(data)
-```
-
-### 4.4 Go - Gin
-
-```go
-func main() {
-    r := gin.Default()
-    
-    r.GET("/users", func(c *gin.Context) {
-        users, err := db.GetAllUsers(c.Request.Context())
-        if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-            return
-        }
-        c.JSON(http.StatusOK, users)
-    })
-    
-    r.POST("/users", func(c *gin.Context) {
-        var user User
-        if err := c.ShouldBindJSON(&user); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-            return
-        }
-        created, _ := db.CreateUser(c.Request.Context(), user)
-        c.JSON(http.StatusCreated, created)
-    })
-    
-    r.Run(":8080")
-}
-```
-
-### 4.5 Rust - Axum
-
-```rust
-async fn get_users(State(db): State<DbPool>) -> Json<Vec<User>> {
-    let users = db.get_all_users().await.unwrap();
-    Json(users)
-}
-
-async fn create_user(State(db): State<DbPool>, Json(data): Json<CreateUser>) -> (StatusCode, Json<User>) {
-    let user = db.create_user(data).await.unwrap();
-    (StatusCode::CREATED, Json(user))
-}
-
-#[tokio::main]
-async fn main() {
-    let app = Router::new()
-        .route("/users", get(get_users).post(create_user))
-        .with_state(db_pool);
-    
-    axum::serve(listener, app).await.unwrap();
-}
-```
-
----
-
-## 5. Frontend Patterns
-
-### 5.1 React Component Structure
-
-```typescript
-import { useState, useCallback, useMemo } from "react";
-
-type Props = {
-  user: User;
-  onUpdate: (user: User) => void;
-};
-
-function UserCard({ user, onUpdate }: Props) {
-  // 1. Hooks
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // 2. Memoized values
-  const displayName = useMemo(() => `${user.firstName} ${user.lastName}`, [user]);
-  
-  // 3. Callbacks
-  const handleSave = useCallback(() => {
-    onUpdate(user);
-    setIsEditing(false);
-  }, [user, onUpdate]);
-  
-  // 4. Early returns
-  if (!user) return null;
-  
-  // 5. Render
-  return <div>{displayName}</div>;
-}
-```
-
-### 5.2 Data Fetching (TanStack Query)
-
-```typescript
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-function useUsers() {
-  return useQuery({
-    queryKey: ["users"],
-    queryFn: () => api.users.get(),
-  });
-}
-
-function useCreateUser() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (data: CreateUser) => api.users.post(data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
-  });
-}
-```
-
-### 5.3 State Management (Zustand)
-
-```typescript
-import { create } from "zustand";
-
-interface AppState {
-  user: User | null;
-  setUser: (user: User | null) => void;
-}
-
-export const useAppStore = create<AppState>((set) => ({
-  user: null,
-  setUser: (user) => set({ user }),
-}));
-```
-
-### 5.4 State Management (Jotai)
-
-```typescript
-import { atom, useAtom, useAtomValue } from "jotai";
-
-const userAtom = atom<User | null>(null);
-const isLoggedInAtom = atom((get) => get(userAtom) !== null);
-
-export function useUser() {
-  return useAtom(userAtom);
-}
-
-export function useIsLoggedIn() {
-  return useAtomValue(isLoggedInAtom);
-}
-```
-
----
-
-## 6. Database Patterns
-
-### 6.1 TypeScript - Drizzle ORM
-
-```typescript
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-
-export const users = sqliteTable("users", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-});
-
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-
-// Queries
-export async function getAllUsers(): Promise<User[]> {
-  return db.select().from(users);
-}
-
-export async function createUser(data: NewUser): Promise<User> {
-  const [user] = await db.insert(users).values(data).returning();
-  return user;
-}
-```
-
-### 6.2 Python - SQLAlchemy
-
-```python
-from sqlalchemy import Column, String, DateTime, func
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(String, primary_key=True)
-    name = Column(String, nullable=False)
-    email = Column(String, nullable=False, unique=True)
-    created_at = Column(DateTime, default=func.now())
-```
-
-### 6.3 Go - GORM
-
-```go
-type User struct {
-    ID        string    `gorm:"primaryKey"`
-    Name      string    `gorm:"not null"`
-    Email     string    `gorm:"uniqueIndex;not null"`
-    CreatedAt time.Time `gorm:"autoCreateTime"`
-}
-
-func GetAllUsers(db *gorm.DB) ([]User, error) {
-    var users []User
-    result := db.Find(&users)
-    return users, result.Error
-}
-```
-
-### 6.4 Rust - SeaORM
-
-```rust
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-#[sea_orm(table_name = "users")]
-pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: String,
-    pub name: String,
-    #[sea_orm(unique)]
-    pub email: String,
-    pub created_at: DateTime,
-}
-```
-
----
-
-## 7. Testing Standards
-
-### 7.1 Test-Driven Development (TDD) - MANDATORY
+### 3.1 Test-Driven Development (TDD) - MANDATORY
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -548,7 +200,7 @@ pub struct Model {
 └─────────────────────────────────────────────┘
 ```
 
-### 7.2 Coverage Requirements
+### 3.2 Coverage Requirements
 
 | Metric | Minimum | Target |
 |--------|---------|--------|
@@ -557,68 +209,39 @@ pub struct Model {
 | Functions | 80% | 90% |
 | Lines | 80% | 90% |
 
-### 7.3 Test Examples by Language
+### 3.3 Testing Best Practices
 
-**TypeScript (Vitest):**
-```typescript
-import { describe, it, expect } from "vitest";
+- **Test Organization**: Group related tests using describe/context blocks
+- **Test Naming**: Use descriptive test names that explain what is being tested
+- **AAA Pattern**: Arrange (setup), Act (execute), Assert (verify)
+- **Test Isolation**: Each test should be independent and not rely on other tests
+- **Mock External Dependencies**: Use mocks/stubs for external services, databases, APIs
+- **Edge Cases**: Test boundary conditions, error cases, and edge scenarios
+- **Async Testing**: Properly handle asynchronous operations in tests
 
-describe("UserService", () => {
-  it("should create user with valid data", async () => {
-    const data = { name: "John", email: "john@example.com" };
-    const result = await createUser(data);
-    expect(result).toMatchObject(data);
-  });
-});
-```
-
-**Python (pytest):**
-```python
-import pytest
-
-async def test_create_user_success():
-    data = {"name": "John", "email": "john@example.com"}
-    result = await create_user(data)
-    assert result["name"] == data["name"]
-```
-
-**Go:**
-```go
-func TestCreateUser(t *testing.T) {
-    data := User{Name: "John", Email: "john@example.com"}
-    result, err := CreateUser(db, &data)
-    assert.NoError(t, err)
-    assert.Equal(t, data.Name, result.Name)
-}
-```
-
-**Rust:**
-```rust
-#[tokio::test]
-async fn test_create_user_success() {
-    let data = CreateUser { name: "John".into(), email: "john@example.com".into() };
-    let result = create_user(&db, data).await.unwrap();
-    assert_eq!(result.name, "John");
-}
-```
+**Common Testing Frameworks by Language:**
+- TypeScript/JavaScript: Vitest, Jest, Playwright
+- Python: pytest, unittest
+- Go: testing package, testify
+- Rust: cargo test, rstest
 
 ---
 
-## 8. SOLID Principles
+## 4. SOLID Principles
 
-### 8.1 Single Responsibility (SRP)
+### 4.1 Single Responsibility (SRP)
 Each module/class should have only ONE reason to change.
 
-### 8.2 Open/Closed (OCP)
+### 4.2 Open/Closed (OCP)
 Open for extension, closed for modification.
 
-### 8.3 Liskov Substitution (LSP)
+### 4.3 Liskov Substitution (LSP)
 Subtypes must be substitutable for their base types.
 
-### 8.4 Interface Segregation (ISP)
+### 4.4 Interface Segregation (ISP)
 Clients should not depend on interfaces they don't use.
 
-### 8.5 Dependency Inversion (DIP)
+### 4.5 Dependency Inversion (DIP)
 Depend on abstractions, not concretions.
 
 | Principle | Violation Sign |
@@ -631,9 +254,9 @@ Depend on abstractions, not concretions.
 
 ---
 
-## 9. Security Best Practices
+## 5. Security Best Practices
 
-### 9.1 Input Validation
+### 5.1 Input Validation
 
 **Always validate all user input:**
 
@@ -652,7 +275,7 @@ class UserInput(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 ```
 
-### 9.2 Environment Variables
+### 5.2 Environment Variables
 
 ```typescript
 // Validate env vars at startup
@@ -670,7 +293,7 @@ const env = envSchema.parse(process.env);
 !.env.example
 ```
 
-### 9.3 SQL Injection Prevention
+### 5.3 SQL Injection Prevention
 
 **Always use parameterized queries:**
 
@@ -684,9 +307,9 @@ const user = await db.execute(`SELECT * FROM users WHERE email = '${userInput}'`
 
 ---
 
-## 10. Error Handling
+## 6. Error Handling
 
-### 10.1 Backend
+### 6.1 Backend Error Handling
 
 ```typescript
 // TypeScript
@@ -715,7 +338,7 @@ async def get_user(user_id: str):
         raise HTTPException(status_code=500, detail="Internal error")
 ```
 
-### 10.2 Frontend
+### 6.2 Frontend Error Handling
 
 ```typescript
 function UserProfile({ id }: { id: string }) {
@@ -734,16 +357,16 @@ function UserProfile({ id }: { id: string }) {
 
 ---
 
-## 11. Performance Guidelines
+## 7. Performance Guidelines
 
-### 11.1 Database Optimization
+### 7.1 Database Optimization
 
 - Add indexes for frequently queried columns
 - Avoid N+1 queries (use joins or batch loading)
 - Use pagination for large datasets
 - Cache frequently accessed data
 
-### 11.2 Frontend Optimization
+### 7.2 Frontend Optimization
 
 ```typescript
 // Memoize expensive computations
@@ -758,9 +381,9 @@ const HeavyComponent = lazy(() => import("./HeavyComponent"));
 
 ---
 
-## 12. Documentation Standards
+## 8. Documentation Standards
 
-### 12.1 Code Comments
+### 8.1 Code Comments
 
 ```typescript
 // ❌ BAD: Obvious
@@ -771,7 +394,7 @@ counter++;  // Increment counter
 const pageCount = Math.ceil(total / pageSize) || 1;
 ```
 
-### 12.2 Function Documentation
+### 8.2 Function Documentation
 
 ```typescript
 /**
@@ -788,9 +411,9 @@ function calculateTotal(basePrice: number, taxRate: number): number {
 
 ---
 
-## 13. Git Workflow
+## 9. Git Workflow
 
-### 13.1 Branch Strategy
+### 9.1 Branch Strategy
 
 **MANDATORY: Create feature branch before implementing ANY issue.**
 
@@ -803,7 +426,7 @@ git push origin feature/issue-{number}-{description}
 gh pr create --base develop
 ```
 
-### 13.2 Branch Naming
+### 9.2 Branch Naming
 
 | Type | Pattern | Example |
 |------|---------|---------|
@@ -812,7 +435,7 @@ gh pr create --base develop
 | Hotfix | `hotfix/{desc}` | `hotfix/security-patch` |
 | Epic | `feature/epic-{n}-{name}` | `feature/epic-1-user-management` |
 
-### 13.3 Protected Branches
+### 9.3 Protected Branches
 
 | Branch | Direct Commits | Status |
 |--------|----------------|--------|
@@ -820,7 +443,7 @@ gh pr create --base develop
 | `develop` | **NEVER** | Integration |
 | `feature/*` | YES | Working branch |
 
-### 13.4 Commit Messages (Conventional Commits)
+### 9.4 Commit Messages (Conventional Commits)
 
 ```bash
 <type>(<scope>): <subject>
@@ -831,7 +454,7 @@ git commit -m "feat(auth): add JWT refresh token"
 git commit -m "fix(api): handle null response"
 ```
 
-### 13.5 Pre-Commit Quality Gates
+### 9.5 Pre-Commit Quality Gates
 
 ```bash
 {{PACKAGE_MANAGER}} typecheck   # Type checking
@@ -842,9 +465,9 @@ git commit -m "fix(api): handle null response"
 
 ---
 
-## 14. Issue Hierarchy
+## 10. Issue Hierarchy
 
-### 14.1 Structure
+### 10.1 Structure
 
 | Level | Entity | Purpose |
 |-------|--------|---------|
@@ -852,7 +475,7 @@ git commit -m "fix(api): handle null response"
 | Task | Sub-Issue | Individual unit of work |
 | Milestone | Milestone | Delivery target |
 
-### 14.2 Epic Template
+### 10.2 Epic Template
 
 ```markdown
 ## [EPIC] {{Name}}: {{Description}}
@@ -868,7 +491,7 @@ Brief description.
 - [ ] Criterion 1
 ```
 
-### 14.3 Sub-Issue Template
+### 10.3 Sub-Issue Template
 
 ```markdown
 ## Parent
@@ -883,9 +506,9 @@ Task details.
 
 ---
 
-## 15. AI Agent Workflow
+## 11. AI Agent Workflow
 
-### 15.0 TDD-First Principle (ABSOLUTE REQUIREMENT)
+### 11.0 TDD-First Principle (ABSOLUTE REQUIREMENT)
 
 **TEST-DRIVEN DEVELOPMENT IS NON-NEGOTIABLE. NO EXCEPTIONS. EVER.**
 
@@ -983,7 +606,7 @@ Only AFTER all above are checked:
 
 ---
 
-### 15.0.1 Zero-Impact Implementation (ABSOLUTE REQUIREMENT)
+### 11.0.1 Zero-Impact Implementation (ABSOLUTE REQUIREMENT)
 
 **IMPLEMENTATIONS MUST NEVER BREAK EXISTING FUNCTIONALITY. NO EXCEPTIONS.**
 
@@ -1095,7 +718,7 @@ If a breaking change is ABSOLUTELY necessary:
 
 ---
 
-### 15.1 Pre-Implementation: Codebase Exploration (MANDATORY)
+### 11.1 Pre-Implementation: Codebase Exploration (MANDATORY)
 
 **Before ANY implementation work begins, agents MUST explore and understand the codebase.**
 
@@ -1153,7 +776,7 @@ If a breaking change is ABSOLUTELY necessary:
 - Integration issues
 - Wasted review cycles
 
-### 15.2 Task Planning: Breaking Down Milestones (MANDATORY)
+### 11.2 Task Planning: Breaking Down Milestones (MANDATORY)
 
 **When creating issues/tasks for a milestone, tasks MUST be as small as possible.**
 
@@ -1288,7 +911,7 @@ If a breaking change is ABSOLUTELY necessary:
 
 **The codebase health is everyone's responsibility. A "small" documentation change that bypasses a failing typecheck still ships broken code.**
 
-### 15.3 Implementation Process
+### 11.3 Implementation Process
 
 | Step | Agent | Action |
 |------|-------|--------|
@@ -1311,7 +934,7 @@ If a breaking change is ABSOLUTELY necessary:
 
 **CRITICAL:** Steps 3-4 (TDD) and Steps 7-9 (Impact Verification) are NON-NEGOTIABLE.
 
-### 15.4 Minimum Review Requirements
+### 11.4 Minimum Review Requirements
 
 **Each PR MUST receive at least 3 reviews before merge:**
 
@@ -1321,7 +944,7 @@ If a breaking change is ABSOLUTELY necessary:
 | Review #2 | Verify fixes, deeper analysis, edge cases |
 | Review #3 | Final verification, merge decision |
 
-### 15.5 Team Agent Roles
+### 11.5 Team Agent Roles
 
 | Agent | Exploration Focus | Implementation Focus |
 |-------|-------------------|----------------------|
@@ -1333,7 +956,7 @@ If a breaking change is ABSOLUTELY necessary:
 
 **All agents participate in Phase 0 exploration based on their domain expertise.**
 
-### 15.6 Workflow Diagram
+### 11.6 Workflow Diagram
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -1403,7 +1026,7 @@ If a breaking change is ABSOLUTELY necessary:
 └─────────────────────────────────────────────┘
 ```
 
-### 15.7 Epic Branch Strategy
+### 11.7 Epic Branch Strategy
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -1434,9 +1057,9 @@ If a breaking change is ABSOLUTELY necessary:
 
 ---
 
-## 16. Claude Code Configuration
+## 12. Claude Code Configuration
 
-### 16.1 File Location Rules
+### 12.1 File Location Rules
 
 **All Claude Code files MUST be in project root:**
 
